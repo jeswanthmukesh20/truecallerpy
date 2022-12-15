@@ -60,10 +60,7 @@ config = vars(args)
 
 
 def getNumber(x):
-    if x[0] == "0":
-        return x[1:].replace(" ", "")
-    else:
-        return x.replace(" ", "")
+    return x[1:].replace(" ", "") if x[0] == "0" else x.replace(" ", "")
 
 
 def getAuthKey():
@@ -91,36 +88,35 @@ def search_phonenumber(phoneNumber, regionCode, installationId):
 
     params = {
         "q": getNumber(nationalPhoneNumber),
-        "countryCode": "{}".format(phonenumbers.region_code_for_number(phNumber)),
+        "countryCode": f"{phonenumbers.region_code_for_number(phNumber)}",
         "type": "4",
         "locAddr": "",
         "placement": "SEARCHRESULTS,HISTORY,DETAILS",
-        "encoding": "json"
+        "encoding": "json",
     }
     headers = {
         "content-type": "application/json; charset=UTF-8",
         "accept-encoding": "gzip",
         "user-agent": "Truecaller/11.75.5 (Android;10)",
         "clientsecret": "lvc22mp3l1sfv6ujg83rd17btt",
-        "authorization": "Bearer " + installationId}
+        "authorization": f"Bearer {installationId}",
+    }
     try:
         req = requests.get(
             'https://search5-noneu.truecaller.com/v2/search', headers=headers, params=params)
         #print(req.status_code, req.text)
         if req.status_code == 429:
-            x = {
+            return {
                 "errorCode": 429,
                 "errorMessage": "too many requests.",
-                "data": None
+                "data": None,
             }
-            return x
         elif req.json().get('status'):
-            x = {
+            return {
                 "errorCode": 401,
                 "errorMessage": "Your previous login was expired.",
-                "data": None
+                "data": None,
             }
-            return x
         else:
             return req.json()
     except requests.exceptions.RequestException as e:
@@ -141,7 +137,7 @@ def bulk_search(data, regionCode, installationId):
         "accept-encoding": "gzip",
         "user-agent": "Truecaller/11.75.5 (Android;10)",
         "clientsecret": "lvc22mp3l1sfv6ujg83rd17btt",
-        "authorization": "Bearer " + installationId
+        "authorization": f"Bearer {installationId}",
     }
 
     try:
@@ -149,19 +145,17 @@ def bulk_search(data, regionCode, installationId):
             'https://search5-noneu.truecaller.com/v2/bulk', headers=headers, params=params)
         #print(req.status_code, req.text)
         if req.status_code == 429:
-            x = {
+            return {
                 "errorCode": 429,
                 "errorMessage": "too many requests.",
-                "data": None
+                "data": None,
             }
-            return x
         elif req.json().get('status'):
-            x = {
+            return {
                 "errorCode": 401,
                 "errorMessage": "Your previous login was expired.",
-                "data": None
+                "data": None,
             }
-            return x
         else:
             return req.json()
     except requests.exceptions.RequestException as e:
@@ -176,8 +170,10 @@ def truecallerpy_search_phonenumber(config):
         installationId = authenticationJson["installationId"]
         # print(authenticationJson["phones"][0]["countryCode"])
 
-        number = phonenumbers.parse(config['search'], "{}".format(
-            authenticationJson["phones"][0]["countryCode"]))
+        number = phonenumbers.parse(
+            config['search'],
+            f'{authenticationJson["phones"][0]["countryCode"]}',
+        )
         if phonenumbers.is_valid_number(number) == False:
             raise SystemExit('\x1b[31mEnter valid phone number\x1b[0m')
 
@@ -187,14 +183,18 @@ def truecallerpy_search_phonenumber(config):
             phoneNumberNational), phonenumbers.region_code_for_number(number), installationId)
 
         # print(jsonInfo["data"])
-        if jsonInfo["data"] == None and config["json"] == False:
+        if jsonInfo["data"] is None and config["json"] == False:
             if jsonInfo["errorCode"] == 429:
                 raise SystemExit(
                     '\x1b[33mToo many requests. \nPlease try again tomorrow, maybe!\x1b[0m')
             else:
                 raise SystemExit(
                     '\x1b[33mYour previous login was expired. \nPlease login to your account\x1b[0m')
-        elif jsonInfo["data"] == None and config["json"] == True and config["raw"] == False:
+        elif (
+            jsonInfo["data"] is None
+            and config["json"] == True
+            and config["raw"] == False
+        ):
             print(json.dumps(jsonInfo, indent=3))
         elif config["raw"] == True and config["name"] == False and config["email"] == False:
             print(jsonInfo)
@@ -215,7 +215,7 @@ def truecallerpy_search_phonenumber(config):
                 else:
                     name = "Unknown number"
 
-                print("\x1b[33mName\x1b[0m : \x1b[32m {} \x1b[0m".format(name))
+                print(f"\x1b[33mName\x1b[0m : \x1b[32m {name} \x1b[0m")
             except OSError as error:
                 raise SystemExit(error)
 
@@ -237,7 +237,7 @@ def truecallerpy_search_phonenumber(config):
                 else:
                     email = "Email not found"
 
-                print("\x1b[33memail\x1b[0m : \x1b[32m {} \x1b[0m".format(email))
+                print(f"\x1b[33memail\x1b[0m : \x1b[32m {email} \x1b[0m")
             except OSError as error:
                 raise SystemExit(error)
         else:
@@ -256,14 +256,19 @@ def truecallerpy_bulksearch(config):
             config["bs"], authenticationJson["phones"][0]["countryCode"], installationId)
 
         # print(xdata)
-        if jsonInfo["data"] == None and config["json"] == False:
+        if jsonInfo["data"] is None and config["json"] == False:
             if jsonInfo["errorCode"] == 429:
                 raise SystemExit(
                     '\x1b[33mToo many requests. \nPlease try again tomorrow, maybe!\x1b[0m')
             else:
                 raise SystemExit(
                     '\x1b[33mYour previous login was expired. \nPlease login to your account\x1b[0m')
-        elif jsonInfo["data"] == None and config["json"] == True and config["raw"] == False and config["email"] == False:
+        elif (
+            jsonInfo["data"] is None
+            and config["json"] == True
+            and config["raw"] == False
+            and config["email"] == False
+        ):
             print(json.dumps(jsonInfo, indent=3))
         elif config["raw"] == True and config["name"] == False and config["email"] == False:
             print(jsonInfo)
@@ -278,25 +283,66 @@ def truecallerpy_get_installationId(config):
     else:
         installationId = authenticationJson["installationId"]
         if config["raw"] == False:
-            print('\x1b[33mYour installationId\x1b[0m : \x1b[32m {}\x1b[0m'.format(
-                installationId))
+            print(f'\x1b[33mYour installationId\x1b[0m : \x1b[32m {installationId}\x1b[0m')
         else:
             print(installationId)
 
 
 def ExecuteTrurcallerPy():
     os.system("")
-    if config["version"] == True and config['login'] == False and config['file'] == None and config['name'] == False and config['raw'] == False and config['search'] == None and config['installationId'] == False and config['bs'] == None:
+    if (
+        config["version"] == True
+        and config['login'] == False
+        and config['file'] is None
+        and config['name'] == False
+        and config['raw'] == False
+        and config['search'] is None
+        and config['installationId'] == False
+        and config['bs'] is None
+    ):
         print(truecallerpy_info())
-    elif config['login'] == True and config['file'] == None and config['name'] == False and config['raw'] == False and config['search'] == None and config['installationId'] == False and config['bs'] == None:
+    elif (
+        config['login'] == True
+        and config['file'] is None
+        and config['name'] == False
+        and config['raw'] == False
+        and config['search'] is None
+        and config['installationId'] == False
+        and config['bs'] is None
+    ):
         truecallerpy_login(config)
-    elif config['login'] == True and config['name'] == False and config['raw'] == False and config['search'] == None and config['installationId'] == False and config['bs'] == None:
+    elif (
+        config['login'] == True
+        and config['name'] == False
+        and config['raw'] == False
+        and config['search'] is None
+        and config['installationId'] == False
+        and config['bs'] is None
+    ):
         truecallerpy_login_with_file(config)
-    elif config['login'] == False and config['file'] == None and config['search'] != None and config['installationId'] == False and config['bs'] == None:
+    elif (
+        config['login'] == False
+        and config['file'] is None
+        and config['search'] != None
+        and config['installationId'] == False
+        and config['bs'] is None
+    ):
         truecallerpy_search_phonenumber(config)
-    elif config['login'] == False and config['file'] == None and config['search'] == None and config['bs'] != None and config['installationId'] == False:
+    elif (
+        config['login'] == False
+        and config['file'] is None
+        and config['search'] is None
+        and config['bs'] != None
+        and config['installationId'] == False
+    ):
         truecallerpy_bulksearch(config)
-    elif config['login'] == False and config['file'] == None and config['search'] == None and config['installationId'] == True and config['bs'] == None:
+    elif (
+        config['login'] == False
+        and config['file'] is None
+        and config['search'] is None
+        and config['installationId'] == True
+        and config['bs'] is None
+    ):
         truecallerpy_get_installationId(config)
     else:
         parser.print_help()

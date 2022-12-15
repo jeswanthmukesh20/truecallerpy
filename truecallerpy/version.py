@@ -27,10 +27,10 @@ from os.path import abspath, dirname, join
 
 def truecallerpy_info():
     this_dir = abspath(dirname(__file__))
-    
+
     with open(join(this_dir,"version.txt"), encoding='utf-8') as versionFile:
         version = versionFile.read()
-    data = '''
+    return '''
     truecallerpy
     Version     : {}
     Summary     : A package to find phone number details
@@ -38,7 +38,8 @@ def truecallerpy_info():
     Author      : Sumith Emmadi
     Author-email: sumithemmadi244@gmail.com
     License     : MIT
-    '''.format(version)
-    return data
+    '''.format(
+        version
+    )
 
 # print(truecallerpy_info())

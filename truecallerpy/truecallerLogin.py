@@ -38,10 +38,7 @@ from .phonesList import truecallerpy_get_random_phone
 
 
 def getNumber(x):
-    if x[0] == "0":
-        return x[1:].replace(" ", "")
-    else:
-        return x.replace(" ", "")
+    return x[1:].replace(" ", "") if x[0] == "0" else x.replace(" ", "")
 
 
 def truecallerpy_login(config):
@@ -57,7 +54,7 @@ def truecallerpy_login(config):
     r_path = os.path.join(config_dir, directory, "request.json")
     try:
         os.makedirs(dir_path, exist_ok=True)
-        print("Directory '%s' created successfully" % directory)
+        print(f"Directory '{directory}' created successfully")
     except OSError as error:
         raise SystemExit(error)
 
@@ -75,33 +72,40 @@ def truecallerpy_login(config):
 
     phoneNumberNational = phonenumbers.format_number(
         phoneNumber, phonenumbers.PhoneNumberFormat.NATIONAL)
-    print('\x1b[32mSending otp to {} \x1b[0m'.format(getNumber(number)))
+    print(f'\x1b[32mSending otp to {getNumber(number)} \x1b[0m')
     phoneSpecs = truecallerpy_get_random_phone()
 
     data = {
         "countryCode": phonenumbers.region_code_for_number(phoneNumber),
-        "dialingCode": phonenumbers.country_code_for_region(phonenumbers.region_code_for_number(phoneNumber)),
+        "dialingCode": phonenumbers.country_code_for_region(
+            phonenumbers.region_code_for_number(phoneNumber)
+        ),
         "installationDetails": {
             "app": {
                 "buildVersion": 5,
                 "majorVersion": 11,
                 "minorVersion": 7,
-                "store": "GOOGLE_PLAY"
+                "store": "GOOGLE_PLAY",
             },
             "device": {
-                "deviceId": ''.join(random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst') for i in range(16)),
+                "deviceId": ''.join(
+                    random.choice(
+                        '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst'
+                    )
+                    for _ in range(16)
+                ),
                 "language": "en",
-                "manufacturer": "{}".format(phoneSpecs["manufacturer"]),
-                "model": "{}".format(phoneSpecs["model"]),
+                "manufacturer": f'{phoneSpecs["manufacturer"]}',
+                "model": f'{phoneSpecs["model"]}',
                 "osName": "Android",
                 "osVersion": "10",
-                "mobileServices": ["GMS"]
+                "mobileServices": ["GMS"],
             },
-            "language": "en"
+            "language": "en",
         },
         "phoneNumber": getNumber(phoneNumberNational),
         "region": "region-2",
-        "sequenceNo": 2
+        "sequenceNo": 2,
     }
 
     headers = {
@@ -121,32 +125,36 @@ def truecallerpy_login(config):
                 os.remove(r_path)
             except IOError:
                 raise SystemExit(
-                    "Unable to delete file\n Delete '{}' this file and try again".format(r_path))
+                    f"Unable to delete file\n Delete '{r_path}' this file and try again"
+                )
         else:
-            if "parsedPhoneNumber" in req_file and '+{}'.format(req_file['parsedPhoneNumber']) == getNumber(number):
+            if (
+                "parsedPhoneNumber" in req_file
+                and f"+{req_file['parsedPhoneNumber']}" == getNumber(number)
+            ):
                 print("\n\nPrevious request was found for this mobile number.\n")
                 x = input("Do you want to enter previous OTP (y/n): ")
                 x_status = True
                 while x_status:
-                    if x == "y" or x == "yes":
+                    if x in ["y", "yes"]:
                         x_status = False
                         request_data = req_file
-                    elif x == "n" or x == "no":
+                    elif x in ["n", "no"]:
                         x_status = False
                         try:
                             os.remove(r_path)
                         except IOError:
                             raise SystemExit(
-                                "Unable to delete file\n Delete '{}' this file and try again".format(r_path))
+                                f"Unable to delete file\n Delete '{r_path}' this file and try again"
+                            )
                         try:
                             postRequest = requests.post(
                                 'https://account-asia-south1.truecaller.com/v2/sendOnboardingOtp', headers=headers, json=data)
                         except requests.exceptions.RequestException as e:
                             raise SystemExit(e)
-                        requestFile = open(r_path, "w")
-                        json.dump(postRequest.json(),
-                                  requestFile, indent=3)
-                        requestFile.close()
+                        with open(r_path, "w") as requestFile:
+                            json.dump(postRequest.json(),
+                                      requestFile, indent=3)
                         request_data = postRequest.json()
                         if request_data['status'] == 1 or request_data['status'] == 9 or request_data['message'] == "Sent":
                             print('\x1b[32mOtp sent successfully\x1b[0m')
@@ -160,9 +168,8 @@ def truecallerpy_login(config):
                         'https://account-asia-south1.truecaller.com/v2/sendOnboardingOtp', headers=headers, json=data)
                 except requests.exceptions.RequestException as e:
                     raise SystemExit(e)
-                requestFile = open(r_path, "w")
-                json.dump(postRequest.json(), requestFile, indent=3)
-                requestFile.close()
+                with open(r_path, "w") as requestFile:
+                    json.dump(postRequest.json(), requestFile, indent=3)
                 request_data = postRequest.json()
                 if request_data['status'] == 1 or request_data['status'] == 9 or request_data['message'] == "Sent":
                     print('\x1b[32mOtp sent successfully\x1b[0m')
@@ -172,9 +179,8 @@ def truecallerpy_login(config):
                 'https://account-asia-south1.truecaller.com/v2/sendOnboardingOtp', headers=headers, json=data)
         except requests.exceptions.RequestException as e:
             raise SystemExit(e)
-        requestFile = open(r_path, "w")
-        json.dump(postRequest.json(), requestFile, indent=3)
-        requestFile.close()
+        with open(r_path, "w") as requestFile:
+            json.dump(postRequest.json(), requestFile, indent=3)
         request_data = postRequest.json()
         if request_data['status'] == 1 or request_data['status'] == 9 or request_data['message'] == "Sent":
             print('\x1b[32mOtp sent successfully\x1b[0m')
@@ -193,31 +199,33 @@ def truecallerpy_login(config):
             'https://account-asia-south1.truecaller.com/v1/verifyOnboardingOtp', headers=headers, json=postData)
         otp_req_data = otpPostRequest.json()
         if otp_req_data['status'] == 2 and otp_req_data['suspended'] == False:
-            print('\x1b[33mYour installationId\x1b[0m : \x1b[32m {}\x1b[0m'.format(
-                otp_req_data['installationId']))
-            authKeyFile = open(path, "w")
-            json.dump(otp_req_data, authKeyFile, indent=3)
-            authKeyFile.close()
+            print(
+                f"\x1b[33mYour installationId\x1b[0m : \x1b[32m {otp_req_data['installationId']}\x1b[0m"
+            )
+            with open(path, "w") as authKeyFile:
+                json.dump(otp_req_data, authKeyFile, indent=3)
             print('\x1b[32mLogged in successfully.\x1b[0m')
             try:
                 os.remove(r_path)
             except IOError:
                 raise SystemExit(
-                    "Unable to delete file\n Delete '{}' this file and try again. \nDon't worry about this error your login was successfull".format(r_path))
+                    f"Unable to delete file\n Delete '{r_path}' this file and try again. \nDon't worry about this error your login was successfull"
+                )
         elif otp_req_data['status'] == 11 or otp_req_data['message'] == "Invalid credentials":
             print('\x1b[31m! Invalid OTP\x1b[0m')
         else:
             print(otp_req_data['message'])
 
-    elif (request_data['status'] == 6 or request_data['status'] == 5):
+    elif request_data['status'] in [6, 5]:
         print('\x1b[31mYou have exceeded the limit of verification attempts.\nPlease try again after some time.\x1b[0m')
         try:
             os.remove(r_path)
         except IOError:
             raise SystemExit(
-                "Unable to delete file\n Delete '{}' this file and try again".format(r_path))
+                f"Unable to delete file\n Delete '{r_path}' this file and try again"
+            )
     else:
-        print('\x1b[31m {} \x1b[0m'.format(request_data['message']))
+        print(f"\x1b[31m {request_data['message']} \x1b[0m")
 
 
 def truecallerpy_login_with_file(config):
